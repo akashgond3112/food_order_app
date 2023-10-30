@@ -128,3 +128,8 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+
+#docker data
+./docker/postgres_data
+./docker/mongodb-data
