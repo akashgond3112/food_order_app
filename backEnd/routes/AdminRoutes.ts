@@ -5,7 +5,7 @@ const router = expres.Router()
 
 router.post("/vendor", CreateVendor)
 router.get("/vendor", GetVendors)
-router.get("/vendor:id", GetVendorById)
+router.get("/vendor/:id", GetVendorById)
 
 
 export {router as AdminRoutes}

@@ -131,5 +131,5 @@ dist
 
 
 #docker data
-./docker/postgres_data
-./docker/mongodb-data
+backEnd/docker/mongodb-data/*
+backEnd/docker/mysql/mongodb-data/*
