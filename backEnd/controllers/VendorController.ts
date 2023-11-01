@@ -1,7 +1,9 @@
-import expres, { Request, Response, NextFunction } from "express";
-import { UpdateVendorDtoInput, VendorCredentials } from "../dto";
+import express, { Request, Response, NextFunction } from "express";
+import { UpdateVendorDtoInput, VendorCredentials, VendorPayLoad } from "../dto";
 import { FindVendor } from "./AdminController";
 import { ValidatePassword, generateWebToken } from "../utilities";
+import { CreateFoodInputs } from "../dto/Food.dto";
+import { Food } from "../model";
 
 export const logIn = async (
   req: Request,
@@ -69,7 +71,7 @@ export const updateProfile = async (
   const { name, ownerName, address, foodType, phone, pincode } = <
     UpdateVendorDtoInput
   >req.body;
-  const user = req.user;
+  const user: VendorPayLoad | undefined = req.user;
   if (user) {
     const existingUser = await FindVendor(user._id);
 
@@ -81,8 +83,45 @@ export const updateProfile = async (
       if (phone) existingUser!.phone = phone;
       if (pincode) existingUser!.pincode = pincode;
 
+      // Handle cover image update
+      if (req.files !== undefined) {
+        const files = req.files as [Express.Multer.File];
+        const imagesName = files.map(
+          (file: Express.Multer.File) => file.filename
+        );
+        existingUser!.coverImages.push(...imagesName);
+      }
+
       const updatedProfile = await existingUser?.save();
-      return res.json(updatedProfile);
+      return res.status(200).json(updatedProfile);
+    } else {
+      return res.json({ message: "User not found" });
+    }
+  } else {
+    return res.json({ message: "User not found" });
+  }
+};
+
+export const updateProfileImage = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user: VendorPayLoad | undefined = req.user;
+  if (user) {
+    const existingUser = await FindVendor(user._id);
+
+    if (existingUser !== null) {
+      // Handle files
+      const files = req.files as [Express.Multer.File];
+      const imagesName = files.map(
+        (file: Express.Multer.File) => file.filename
+      );
+
+      existingUser!.coverImages.push(...imagesName);
+
+      const updatedProfile = await existingUser?.save();
+      return res.status(200).json(updatedProfile);
     } else {
       return res.json({ message: "User not found" });
     }
@@ -95,4 +134,84 @@ export const updateService = async (
   req: Request,
   res: Response,
   next: NextFunction
-) => {};
+) => {
+  const user: VendorPayLoad | undefined = req.user;
+  if (user) {
+    const existingUser = await FindVendor(user._id);
+
+    if (existingUser !== null) {
+      existingUser!.serviceAvailable = !existingUser!.serviceAvailable;
+
+      const updatedProfile = await existingUser?.save();
+      return res.status(200).json(updatedProfile);
+    } else {
+      return res.json({ message: "User not found" });
+    }
+  } else {
+    return res.json({ message: "User not found" });
+  }
+};
+
+export const addFood = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user: VendorPayLoad | undefined = req.user;
+  if (user) {
+    const { description, foodType, category, name, readyTime, price } = <
+      CreateFoodInputs
+    >req.body;
+
+    const existingUser = await FindVendor(user._id);
+
+    if (existingUser !== null) {
+      // Handle files
+      const files = req.files as [Express.Multer.File];
+      const imagesName = files.map(
+        (file: Express.Multer.File) => file.filename
+      );
+
+      const createdFood = await Food.create({
+        vendorId: existingUser!._id,
+        name: name,
+        description: description,
+        category: category,
+        foodType: foodType,
+        readyTime: readyTime,
+        price: price,
+        rating: 0,
+        images: imagesName,
+      });
+
+      existingUser!.foods.push(createdFood);
+      const result = await existingUser!.save();
+
+      res.status(201).json(result);
+    } else {
+      return res.json({ message: "User not found" });
+    }
+  } else {
+    return res.json({
+      message: "Something went wrong while getting the food.",
+    });
+  }
+};
+
+export const getAllFoods = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const user: VendorPayLoad | undefined = req.user;
+  if (user) {
+    const foods = await Food.find({ vendorId: user._id });
+    if (foods !== null) {
+      return res.json(foods);
+    } else {
+      return res.json({ message: "There is not item found for the vendor." });
+    }
+  } else {
+    return res.json({ message: "User not found" });
+  }
+};

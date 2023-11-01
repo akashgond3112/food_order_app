@@ -33,7 +33,7 @@ export const CreateVendor = async (
 
   const existingVendor = await FindVendor(undefined, email);
 
-  if (existingVendor !== null) {
+  if (existingVendor !== null && existingVendor !== undefined) {
     return res.json(existingVendor);
   }
 
@@ -52,7 +52,8 @@ export const CreateVendor = async (
     salt: salt,
     serviceAvailable: true,
     coverImages: [],
-    rating: 5,
+    rating: 0,
+    foods: [],
   });
 
   return res.json(createVendor);

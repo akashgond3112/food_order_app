@@ -8,6 +8,7 @@ import { AuthPayload } from "../dto/Auth.dto";
 const saltRounds = 10;
 
 export const GenerateSalt = async () => {
+
   return await bcrypt.genSalt(saltRounds);
 };
 
